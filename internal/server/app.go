@@ -1,12 +1,16 @@
 package server
 
 import (
-	ssoRest "Geteway/internal/sso/delivery/rest"
-	logrusCustom "Geteway/pkg/logger"
+	_ "Gateway/docs"
+	ssoRest "Gateway/internal/sso/delivery/rest"
+	logrusCustom "Gateway/pkg/logger"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"net/http"
@@ -43,7 +47,11 @@ func (app *App) Run(port string) error {
 
 	//TODO add cors
 
-	ssoRest.RegisterHTTPEndpoints(router, app.SSOClient)
+	validate := validator.New()
+
+	ssoRest.RegisterHTTPEndpoints(router, validate, app.SSOClient)
+
+	router.GET(os.Getenv("SWAGGER_PATH"), ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	app.httpServer = &http.Server{
 		Addr:    ":" + port,

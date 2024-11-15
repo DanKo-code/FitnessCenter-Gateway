@@ -1,8 +1,8 @@
 package main
 
 import (
-	"Geteway/internal/server"
-	logrusCustom "Geteway/pkg/logger"
+	"Gateway/internal/server"
+	logrusCustom "Gateway/pkg/logger"
 	"fmt"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
