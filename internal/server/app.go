@@ -3,9 +3,11 @@ package server
 import (
 	_ "Gateway/docs"
 	ssoRest "Gateway/internal/sso/delivery/rest"
+	userRest "Gateway/internal/user/delivery/rest"
 	logrusCustom "Gateway/pkg/logger"
 	"context"
 	"fmt"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
@@ -22,6 +24,7 @@ import (
 type App struct {
 	httpServer *http.Server
 	SSOClient  *grpc.ClientConn
+	userClient *grpc.ClientConn
 }
 
 func NewApp() (*App, error) {
@@ -33,9 +36,15 @@ func NewApp() (*App, error) {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("failed to connect to SSO server: %v", err))
 		return nil, err
 	}
+	connUer, err := grpc.NewClient(os.Getenv("USER_SERVICE_PORT"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("failed to connect to User server: %v", err))
+		return nil, err
+	}
 
 	return &App{
-		SSOClient: conn,
+		SSOClient:  conn,
+		userClient: connUer,
 	}, nil
 }
 
@@ -45,11 +54,22 @@ func (app *App) Run(port string) error {
 
 	router := gin.Default()
 
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"PUT"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	//TODO add cors
 
 	validate := validator.New()
 
 	ssoRest.RegisterHTTPEndpoints(router, validate, app.SSOClient)
+
+	userRest.RegisterHTTPEndpoints(router, validate, app.userClient)
 
 	router.GET(os.Getenv("SWAGGER_PATH"), ginSwagger.WrapHandler(swaggerFiles.Handler))
 
