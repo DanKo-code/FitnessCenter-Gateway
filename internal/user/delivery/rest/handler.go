@@ -42,24 +42,6 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 	role := form.Value["role"]
 	photo := form.File["photo"]
 
-	//var photoBytes []byte
-
-	/*if len(photo) > 0 {
-		file, err := photo[0].Open() // Открываем первый файл
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to open photo file"})
-			return
-		}
-		defer file.Close()
-
-		// Пример: читаем содержимое файла в память
-		photoBytes, err = io.ReadAll(file)
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to read photo file"})
-			return
-		}
-	}*/
-
 	err = h.validator.Struct(cmd)
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error validating UpdateUserRequest: %v", err))
