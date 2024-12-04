@@ -57,20 +57,22 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		fmt.Printf("failed to stat file: %v\n", err)
 	}
 
-	userData := &userGRPC.UserData{
+	userDataForUpdate := &userGRPC.UserDataForUpdate{
 		Id:    userId,
 		Email: email[0],
 		Name:  name[0],
 		Role:  role[0],
 	}
 
-	uur := &userGRPC.UpdateUserRequest{
-		Payload: &userGRPC.UpdateUserRequest_UserData{
-			UserData: userData,
-		},
+	updateUserRequestUserDataForUpdate := &userGRPC.UpdateUserRequest_UserDataForUpdate{
+		UserDataForUpdate: userDataForUpdate,
 	}
 
-	err = stream.Send(uur)
+	createUserRequest := &userGRPC.UpdateUserRequest{
+		Payload: updateUserRequestUserDataForUpdate,
+	}
+
+	err = stream.Send(createUserRequest)
 	if err != nil {
 		return
 	}

@@ -16,6 +16,10 @@ import (
 	"strconv"
 )
 
+var (
+	expirationDivider = 1000000000
+)
+
 type Handler struct {
 	ssoClient *grpc.ClientConn
 	validator *validator.Validate
@@ -106,7 +110,7 @@ func (h *Handler) SignUp(c *gin.Context) {
 	c.SetCookie(
 		"refreshToken",
 		upRes.RefreshToken,
-		rteInt/1000000000,
+		rteInt/expirationDivider,
 		"",
 		"",
 		false,
@@ -115,7 +119,7 @@ func (h *Handler) SignUp(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"accessToken":           upRes.GetAccessToken(),
-		"accessTokenExpiration": ateInt / 1000000000,
+		"accessTokenExpiration": ateInt / expirationDivider,
 		"user":                  upRes.GetUser(),
 	})
 }
@@ -181,7 +185,7 @@ func (h *Handler) SignIn(c *gin.Context) {
 		return
 	}
 
-	ateInt, err := strconv.Atoi(siRes.AccessTokenExpiration)
+	ateInt, err := strconv.Atoi(siRes.GetAccessTokenExpiration())
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error convert AccessTokenExpiration to int: %v", err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -198,7 +202,7 @@ func (h *Handler) SignIn(c *gin.Context) {
 	c.SetCookie(
 		"refreshToken",
 		siRes.GetRefreshToken(),
-		rteInt/1000000000,
+		rteInt/expirationDivider,
 		"",
 		"",
 		false,
@@ -207,7 +211,7 @@ func (h *Handler) SignIn(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"accessToken":           siRes.GetAccessToken(),
-		"accessTokenExpiration": ateInt / 1000000000,
+		"accessTokenExpiration": ateInt / expirationDivider,
 	})
 }
 
