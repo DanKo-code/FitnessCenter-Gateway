@@ -2,30 +2,26 @@ package main
 
 import (
 	"Gateway/internal/server"
-	logrusCustom "Gateway/pkg/logger"
-	"fmt"
+	logger "Gateway/pkg/logger"
 	"github.com/joho/godotenv"
-	"github.com/sirupsen/logrus"
 	"os"
 )
 
 func main() {
-	logrusCustom.InitLogger()
-
 	err := godotenv.Load()
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.FatalLevel, fmt.Sprintf("Error loading .env file: %s", err))
+		logger.FatalLogger.Fatalf("Error loading .env file: %s", err)
 	}
 
-	logrusCustom.LogWithLocation(logrus.InfoLevel, "Successfully loaded environment variables")
+	logger.InfoLogger.Printf("Successfully loaded environment variables")
 
 	appGRPC, err := server.NewApp()
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.FatalLevel, fmt.Sprintf("Error initializing app: %s", err))
+		logger.FatalLogger.Fatalf("Error initializing app: %s", err)
 	}
 
 	err = appGRPC.Run(os.Getenv("APP_PORT"))
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.FatalLevel, "Error running server")
+		logger.FatalLogger.Fatalf("Error running server")
 	}
 }

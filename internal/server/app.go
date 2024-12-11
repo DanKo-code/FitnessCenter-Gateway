@@ -4,13 +4,11 @@ import (
 	_ "Gateway/docs"
 	ssoRest "Gateway/internal/sso/delivery/rest"
 	userRest "Gateway/internal/user/delivery/rest"
-	logrusCustom "Gateway/pkg/logger"
+	logger "Gateway/pkg/logger"
 	"context"
-	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/sirupsen/logrus"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"google.golang.org/grpc"
@@ -29,16 +27,14 @@ type App struct {
 
 func NewApp() (*App, error) {
 
-	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered NewApp function"))
-
 	conn, err := grpc.NewClient(os.Getenv("SSO_SERVICE_PORT"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("failed to connect to SSO server: %v", err))
+		logger.ErrorLogger.Printf("failed to connect to SSO server: %v", err)
 		return nil, err
 	}
 	connUer, err := grpc.NewClient(os.Getenv("USER_SERVICE_PORT"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("failed to connect to User server: %v", err))
+		logger.ErrorLogger.Printf("failed to connect to User server: %v", err)
 		return nil, err
 	}
 
@@ -49,8 +45,6 @@ func NewApp() (*App, error) {
 }
 
 func (app *App) Run(port string) error {
-
-	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered Run function"))
 
 	router := gin.Default()
 
@@ -80,7 +74,7 @@ func (app *App) Run(port string) error {
 
 	go func() {
 		if err := app.httpServer.ListenAndServe(); err != nil {
-			logrusCustom.LogWithLocation(logrus.FatalLevel, fmt.Sprintf("Failed to listen and serve: %+v", err))
+			logger.FatalLogger.Printf("Failed to listen and serve: %v", err)
 		}
 	}()
 

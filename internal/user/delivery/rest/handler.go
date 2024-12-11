@@ -2,13 +2,12 @@ package rest
 
 import (
 	"Gateway/internal/user/dtos"
-	logrusCustom "Gateway/pkg/logger"
+	logger "Gateway/pkg/logger"
 	"context"
 	"fmt"
 	userGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.user"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"io"
 	"net/http"
@@ -44,7 +43,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 
 	err = h.validator.Struct(cmd)
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error validating UpdateUserRequest: %v", err))
+		logger.ErrorLogger.Printf("Error validating UpdateUserRequest: %v", err)
 
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

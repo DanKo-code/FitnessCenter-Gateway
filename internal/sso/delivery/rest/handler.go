@@ -3,13 +3,11 @@ package rest
 import (
 	"Gateway/internal/sso/dtos"
 	"Gateway/internal/sso/sso_errors"
-	logrusCustom "Gateway/pkg/logger"
+	logger "Gateway/pkg/logger"
 	"context"
-	"fmt"
 	ssoGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.sso"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"net/http"
 	"os"
@@ -47,14 +45,14 @@ func (h *Handler) SignUp(c *gin.Context) {
 	suReq := &dtos.SignUpRequest{}
 
 	if err := c.ShouldBindJSON(&suReq); err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error binding SignUpRequest: %v", err))
+		logger.ErrorLogger.Printf("Error binding SignUpRequest: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	err := h.validator.Struct(suReq)
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error validating SignUpRequest: %v", err))
+		logger.ErrorLogger.Printf("Error validating SignUpRequest: %v", err)
 
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -62,14 +60,14 @@ func (h *Handler) SignUp(c *gin.Context) {
 
 	fingerPrintValue, exists := c.Get(os.Getenv("APP_FINGERPRINT_REQUEST_KEY"))
 	if !exists {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error getting fingerprint: %v", sso_errors.FingerPrintNotFoundInContext))
+		logger.ErrorLogger.Printf("Error getting fingerprint: %v", sso_errors.FingerPrintNotFoundInContext)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": sso_errors.FingerPrintNotFoundInContext})
 		return
 	}
 
 	FingerPrintValueCasted, ok := fingerPrintValue.(string)
 	if !ok {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error casting fingerprint to string: %v", sso_errors.FingerPrintNotFoundInContext))
+		logger.ErrorLogger.Printf("Error casting fingerprint to string: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": sso_errors.FingerPrintNotFoundInContext})
 		return
 	}
@@ -86,7 +84,7 @@ func (h *Handler) SignUp(c *gin.Context) {
 
 	upRes, err := ssoClient.SignUp(context.Background(), signUpRequest)
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error SignUp: %v", err))
+		logger.ErrorLogger.Printf("Error SignUp: %v", err)
 
 		//TODO add statuses?
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -95,14 +93,14 @@ func (h *Handler) SignUp(c *gin.Context) {
 
 	ateInt, err := strconv.Atoi(upRes.AccessTokenExpiration)
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error convert AccessTokenExpiration to int: %v", err))
+		logger.ErrorLogger.Printf("Error convert AccessTokenExpiration to int: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	rteInt, err := strconv.Atoi(upRes.RefreshTokenExpiration)
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error convert RefreshTokenExpiration to int: %v", err))
+		logger.ErrorLogger.Printf("Error convert RefreshTokenExpiration to int: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -139,14 +137,14 @@ func (h *Handler) SignIn(c *gin.Context) {
 	siReq := &dtos.SignInRequest{}
 
 	if err := c.ShouldBindJSON(siReq); err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error parsing SignInRequest: %v", err))
+		logger.ErrorLogger.Printf("Error parsing SignInRequest: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	err := h.validator.Struct(siReq)
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error validating SignInRequest: %v", err))
+		logger.ErrorLogger.Printf("Error validating SignInRequest: %v", err)
 
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -154,14 +152,14 @@ func (h *Handler) SignIn(c *gin.Context) {
 
 	fingerPrintValue, exists := c.Get(os.Getenv("APP_FINGERPRINT_REQUEST_KEY"))
 	if !exists {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error binding SignUpRequest: %v", sso_errors.FingerPrintNotFoundInContext))
+		logger.ErrorLogger.Printf("Error binding SignUpRequest: %v", sso_errors.FingerPrintNotFoundInContext)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": sso_errors.FingerPrintNotFoundInContext})
 		return
 	}
 
 	FingerPrintValueCasted, ok := fingerPrintValue.(string)
 	if !ok {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error casting fingerprint to string: %v", sso_errors.FingerPrintNotFoundInContext))
+		logger.ErrorLogger.Printf("Error casting fingerprint to string: %v", sso_errors.FingerPrintNotFoundInContext)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": sso_errors.FingerPrintNotFoundInContext})
 		return
 	}
@@ -178,7 +176,7 @@ func (h *Handler) SignIn(c *gin.Context) {
 
 	siRes, err := ssoClient.SignIn(context.Background(), signIpRequest)
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error SignIp: %v", err))
+		logger.ErrorLogger.Printf("Error SignIp: %v", err)
 
 		//TODO add statuses?
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -187,14 +185,14 @@ func (h *Handler) SignIn(c *gin.Context) {
 
 	ateInt, err := strconv.Atoi(siRes.GetAccessTokenExpiration())
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error convert AccessTokenExpiration to int: %v", err))
+		logger.ErrorLogger.Printf("Error convert AccessTokenExpiration to int: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	rteInt, err := strconv.Atoi(siRes.GetRefreshTokenExpiration())
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error convert RefreshTokenExpiration to int: %v", err))
+		logger.ErrorLogger.Printf("Error convert RefreshTokenExpiration to int: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -228,7 +226,7 @@ func (h *Handler) LogOut(c *gin.Context) {
 
 	refreshToken, err := c.Cookie("refreshToken")
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error getting refreshToken from cookie: %v", err))
+		logger.ErrorLogger.Printf("Error getting refreshToken from cookie: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -240,7 +238,7 @@ func (h *Handler) LogOut(c *gin.Context) {
 
 	_, err = ssoClient.LogOut(context.Background(), logOutRequest)
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error LogOut: %v", err))
+		logger.ErrorLogger.Printf("Error LogOut: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -262,21 +260,21 @@ func (h *Handler) LogOut(c *gin.Context) {
 func (h *Handler) Refresh(c *gin.Context) {
 	fingerPrintValue, exists := c.Get(os.Getenv("APP_FINGERPRINT_REQUEST_KEY"))
 	if !exists {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error getting fingerprint	: %v", sso_errors.FingerPrintNotFoundInContext))
+		logger.ErrorLogger.Printf("Error getting fingerprint	: %v", sso_errors.FingerPrintNotFoundInContext)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": sso_errors.FingerPrintNotFoundInContext})
 		return
 	}
 
 	FingerPrintValueCasted, ok := fingerPrintValue.(string)
 	if !ok {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error casting fingerprint to string: %v", sso_errors.FingerPrintNotFoundInContext))
+		logger.ErrorLogger.Printf("Error casting fingerprint to string: %v", sso_errors.FingerPrintNotFoundInContext)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": sso_errors.FingerPrintNotFoundInContext})
 		return
 	}
 
 	refreshToken, err := c.Cookie("refreshToken")
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error getting refreshToken from cookie: %v", err))
+		logger.ErrorLogger.Printf("Error getting refreshToken from cookie: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -290,14 +288,14 @@ func (h *Handler) Refresh(c *gin.Context) {
 
 	rRes, err := ssoClient.Refresh(context.Background(), refreshRequest)
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error Refresh: %v", err))
+		logger.ErrorLogger.Printf("Error Refresh: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	rteInt, err := strconv.Atoi(rRes.GetRefreshTokenExpiration())
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Error convert RefreshTokenExpiration to int: %v", err))
+		logger.ErrorLogger.Printf("Error convert RefreshTokenExpiration to int: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
