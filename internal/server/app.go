@@ -42,7 +42,7 @@ func NewApp() (*App, error) {
 	}
 	connAbonement, err := grpc.NewClient(os.Getenv("ABONEMENT_SERVICE_PORT"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logger.ErrorLogger.Printf("failed to connect to User server: %v", err)
+		logger.ErrorLogger.Printf("failed to connect to Abonement server: %v", err)
 		return nil, err
 	}
 	abonementClient := abonementGRPC.NewAbonementClient(connAbonement)
