@@ -2,10 +2,12 @@ package server
 
 import (
 	_ "Gateway/docs"
+	abonementRest "Gateway/internal/abonement/rest"
 	ssoRest "Gateway/internal/sso/delivery/rest"
 	userRest "Gateway/internal/user/delivery/rest"
 	logger "Gateway/pkg/logger"
 	"context"
+	abonementGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.abonement"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -20,9 +22,10 @@ import (
 )
 
 type App struct {
-	httpServer *http.Server
-	SSOClient  *grpc.ClientConn
-	userClient *grpc.ClientConn
+	httpServer      *http.Server
+	SSOClient       *grpc.ClientConn
+	userClient      *grpc.ClientConn
+	abonementClient *abonementGRPC.AbonementClient
 }
 
 func NewApp() (*App, error) {
@@ -37,10 +40,17 @@ func NewApp() (*App, error) {
 		logger.ErrorLogger.Printf("failed to connect to User server: %v", err)
 		return nil, err
 	}
+	connAbonement, err := grpc.NewClient(os.Getenv("ABONEMENT_SERVICE_PORT"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.ErrorLogger.Printf("failed to connect to User server: %v", err)
+		return nil, err
+	}
+	abonementClient := abonementGRPC.NewAbonementClient(connAbonement)
 
 	return &App{
-		SSOClient:  conn,
-		userClient: connUer,
+		SSOClient:       conn,
+		userClient:      connUer,
+		abonementClient: &abonementClient,
 	}, nil
 }
 
@@ -62,6 +72,8 @@ func (app *App) Run(port string) error {
 	ssoRest.RegisterHTTPEndpoints(router, validate, app.SSOClient)
 
 	userRest.RegisterHTTPEndpoints(router, validate, app.userClient)
+
+	abonementRest.RegisterHTTPEndpoints(router, app.abonementClient)
 
 	router.GET(os.Getenv("SWAGGER_PATH"), ginSwagger.WrapHandler(swaggerFiles.Handler))
 
