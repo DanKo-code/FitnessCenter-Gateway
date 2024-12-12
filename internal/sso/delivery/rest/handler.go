@@ -15,7 +15,8 @@ import (
 )
 
 var (
-	expirationDivider = 1000000000
+	accessTokenMaxAgeDivider  = 100000
+	refreshTokenMaxAgeDivider = 1000000000
 )
 
 type Handler struct {
@@ -108,7 +109,7 @@ func (h *Handler) SignUp(c *gin.Context) {
 	c.SetCookie(
 		"refreshToken",
 		upRes.RefreshToken,
-		rteInt/expirationDivider,
+		rteInt/refreshTokenMaxAgeDivider,
 		"",
 		"",
 		false,
@@ -117,7 +118,7 @@ func (h *Handler) SignUp(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"accessToken":           upRes.GetAccessToken(),
-		"accessTokenExpiration": ateInt / expirationDivider,
+		"accessTokenExpiration": ateInt / accessTokenMaxAgeDivider,
 		"user":                  upRes.GetUser(),
 	})
 }
@@ -200,7 +201,7 @@ func (h *Handler) SignIn(c *gin.Context) {
 	c.SetCookie(
 		"refreshToken",
 		siRes.GetRefreshToken(),
-		rteInt/expirationDivider,
+		rteInt/refreshTokenMaxAgeDivider,
 		"",
 		"",
 		false,
@@ -209,7 +210,7 @@ func (h *Handler) SignIn(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"accessToken":           siRes.GetAccessToken(),
-		"accessTokenExpiration": ateInt / expirationDivider,
+		"accessTokenExpiration": ateInt / accessTokenMaxAgeDivider,
 	})
 }
 
