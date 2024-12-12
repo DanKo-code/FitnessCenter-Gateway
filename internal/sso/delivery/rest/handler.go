@@ -209,6 +209,7 @@ func (h *Handler) SignIn(c *gin.Context) {
 	)
 
 	c.JSON(http.StatusOK, gin.H{
+		"user":                  siRes.GetUser(),
 		"accessToken":           siRes.GetAccessToken(),
 		"accessTokenExpiration": ateInt / accessTokenMaxAgeDivider,
 	})
@@ -294,6 +295,13 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 
+	ateInt, err := strconv.Atoi(rRes.AccessTokenExpiration)
+	if err != nil {
+		logger.ErrorLogger.Printf("Error convert AccessTokenExpiration to int: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	rteInt, err := strconv.Atoi(rRes.GetRefreshTokenExpiration())
 	if err != nil {
 		logger.ErrorLogger.Printf("Error convert RefreshTokenExpiration to int: %v", err)
@@ -304,7 +312,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 	c.SetCookie(
 		"refreshToken",
 		rRes.GetRefreshToken(),
-		rteInt,
+		rteInt/refreshTokenMaxAgeDivider,
 		"",
 		"",
 		false,
@@ -314,6 +322,6 @@ func (h *Handler) Refresh(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"user":                  rRes.GetUser(),
 		"accessToken":           rRes.GetAccessToken(),
-		"accessTokenExpiration": rRes.GetAccessTokenExpiration(),
+		"accessTokenExpiration": ateInt / accessTokenMaxAgeDivider,
 	})
 }
