@@ -14,6 +14,10 @@ github.com/DanKo-code/FitnessCenter-Protobuf v0.3.12 h1:mk60ChJNN4AfQ+qwf2+3PK5c
 github.com/DanKo-code/FitnessCenter-Protobuf v0.3.12/go.mod h1:/Swu1W/3S1bdwWiZx3hy52uvpLKWoyNCiZ8thKnK6K0=
 github.com/DanKo-code/FitnessCenter-Protobuf v0.6.0 h1:xbvvZnKKTLm2s0kSep4QN0t88H3XjvUhrBccUjgR1QY=
 github.com/DanKo-code/FitnessCenter-Protobuf v0.6.0/go.mod h1:/Swu1W/3S1bdwWiZx3hy52uvpLKWoyNCiZ8thKnK6K0=
+github.com/DanKo-code/FitnessCenter-Protobuf v0.6.3 h1:OyqMT4dq1JzmMuJSxxWRBMxJU7+m4Qf17HoK6+btwAo=
+github.com/DanKo-code/FitnessCenter-Protobuf v0.6.3/go.mod h1:/Swu1W/3S1bdwWiZx3hy52uvpLKWoyNCiZ8thKnK6K0=
+github.com/DanKo-code/FitnessCenter-Protobuf v0.6.6 h1:yXCDPLgX+txhklm3+FypRG7jOANF8Mp5/7vqH9dsj68=
+github.com/DanKo-code/FitnessCenter-Protobuf v0.6.6/go.mod h1:/Swu1W/3S1bdwWiZx3hy52uvpLKWoyNCiZ8thKnK6K0=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
 github.com/PuerkitoBio/purell v1.1.1 h1:WEQqlqaGbrPkxLJWfBwQmfEAE1Z7ONdDLqrN38tNFfI=

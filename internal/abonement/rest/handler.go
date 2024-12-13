@@ -18,7 +18,7 @@ func NewHandler(abonementClient *abonementGRPC.AbonementClient) *Handler {
 }
 
 func (h *Handler) GetAbonements(c *gin.Context) {
-	abonements, err := (*h.abonementClient).GetAbonements(c.Request.Context(), &emptypb.Empty{})
+	abonements, err := (*h.abonementClient).GetAbonementsWithServices(c.Request.Context(), &emptypb.Empty{})
 	if err != nil {
 		return
 	}
