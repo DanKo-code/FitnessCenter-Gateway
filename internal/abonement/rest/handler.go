@@ -20,6 +20,11 @@ func NewHandler(abonementClient *abonementGRPC.AbonementClient) *Handler {
 func (h *Handler) GetAbonements(c *gin.Context) {
 	abonements, err := (*h.abonementClient).GetAbonementsWithServices(c.Request.Context(), &emptypb.Empty{})
 	if err != nil {
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"err": err,
+		})
+
 		return
 	}
 

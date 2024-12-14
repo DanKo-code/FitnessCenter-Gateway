@@ -3,11 +3,13 @@ package server
 import (
 	_ "Gateway/docs"
 	abonementRest "Gateway/internal/abonement/rest"
+	coachRest "Gateway/internal/coach/rest"
 	ssoRest "Gateway/internal/sso/delivery/rest"
 	userRest "Gateway/internal/user/delivery/rest"
 	logger "Gateway/pkg/logger"
 	"context"
 	abonementGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.abonement"
+	coachGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.coach"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -26,6 +28,7 @@ type App struct {
 	SSOClient       *grpc.ClientConn
 	userClient      *grpc.ClientConn
 	abonementClient *abonementGRPC.AbonementClient
+	coachClient     *coachGRPC.CoachClient
 }
 
 func NewApp() (*App, error) {
@@ -47,10 +50,18 @@ func NewApp() (*App, error) {
 	}
 	abonementClient := abonementGRPC.NewAbonementClient(connAbonement)
 
+	connCoach, err := grpc.NewClient(os.Getenv("COACH_SERVICE_PORT"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.ErrorLogger.Printf("failed to connect to Coach server: %v", err)
+		return nil, err
+	}
+	coachClient := coachGRPC.NewCoachClient(connCoach)
+
 	return &App{
 		SSOClient:       conn,
 		userClient:      connUer,
 		abonementClient: &abonementClient,
+		coachClient:     &coachClient,
 	}, nil
 }
 
@@ -74,6 +85,8 @@ func (app *App) Run(port string) error {
 	userRest.RegisterHTTPEndpoints(router, validate, app.userClient)
 
 	abonementRest.RegisterHTTPEndpoints(router, app.abonementClient)
+
+	coachRest.RegisterHTTPEndpoints(router, app.coachClient)
 
 	router.GET(os.Getenv("SWAGGER_PATH"), ginSwagger.WrapHandler(swaggerFiles.Handler))
 
