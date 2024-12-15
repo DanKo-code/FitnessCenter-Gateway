@@ -4,12 +4,15 @@ import (
 	_ "Gateway/docs"
 	abonementRest "Gateway/internal/abonement/rest"
 	coachRest "Gateway/internal/coach/rest"
+	reviewRest "Gateway/internal/review/delivery/rest"
 	ssoRest "Gateway/internal/sso/delivery/rest"
 	userRest "Gateway/internal/user/delivery/rest"
 	logger "Gateway/pkg/logger"
 	"context"
 	abonementGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.abonement"
 	coachGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.coach"
+	reviewGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.review"
+	userGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.user"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -29,6 +32,8 @@ type App struct {
 	userClient      *grpc.ClientConn
 	abonementClient *abonementGRPC.AbonementClient
 	coachClient     *coachGRPC.CoachClient
+	reviewClient    *reviewGRPC.ReviewClient
+	userClientI     *userGRPC.UserClient
 }
 
 func NewApp() (*App, error) {
@@ -43,6 +48,8 @@ func NewApp() (*App, error) {
 		logger.ErrorLogger.Printf("failed to connect to User server: %v", err)
 		return nil, err
 	}
+	userClientI := userGRPC.NewUserClient(connUer)
+
 	connAbonement, err := grpc.NewClient(os.Getenv("ABONEMENT_SERVICE_PORT"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.ErrorLogger.Printf("failed to connect to Abonement server: %v", err)
@@ -57,11 +64,20 @@ func NewApp() (*App, error) {
 	}
 	coachClient := coachGRPC.NewCoachClient(connCoach)
 
+	connReview, err := grpc.NewClient(os.Getenv("REVIEW_SERVICE_PORT"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.ErrorLogger.Printf("failed to connect to Review server: %v", err)
+		return nil, err
+	}
+	reviewClient := reviewGRPC.NewReviewClient(connReview)
+
 	return &App{
 		SSOClient:       conn,
 		userClient:      connUer,
 		abonementClient: &abonementClient,
 		coachClient:     &coachClient,
+		reviewClient:    &reviewClient,
+		userClientI:     &userClientI,
 	}, nil
 }
 
@@ -87,6 +103,8 @@ func (app *App) Run(port string) error {
 	abonementRest.RegisterHTTPEndpoints(router, app.abonementClient)
 
 	coachRest.RegisterHTTPEndpoints(router, app.coachClient)
+
+	reviewRest.RegisterHTTPEndpoints(router, app.reviewClient, app.userClientI)
 
 	router.GET(os.Getenv("SWAGGER_PATH"), ginSwagger.WrapHandler(swaggerFiles.Handler))
 

@@ -18,7 +18,7 @@ func NewHandler(coachClient *coachGRPC.CoachClient) *Handler {
 }
 
 func (h *Handler) GetCoaches(c *gin.Context) {
-	coaches, err := (*h.coachClient).GetCoachesWithServices(c.Request.Context(), &emptypb.Empty{})
+	coaches, err := (*h.coachClient).GetCoachesWithServicesWithReviewsWithUsers(c.Request.Context(), &emptypb.Empty{})
 	if err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
