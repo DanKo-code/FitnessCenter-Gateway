@@ -10,4 +10,5 @@ func RegisterHTTPEndpoints(router *gin.Engine, abonementClient *abonementGRPC.Ab
 
 	router.GET("/abonements", h.GetAbonements)
 	router.POST("/abonements", h.CreateAbonement)
+	router.PUT("/abonements", h.UpdateAbonement)
 }

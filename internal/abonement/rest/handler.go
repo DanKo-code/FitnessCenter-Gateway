@@ -131,3 +131,97 @@ func (h *Handler) CreateAbonement(c *gin.Context) {
 		"abonement": res.GetAbonementWithServices(),
 	})
 }
+
+func (h *Handler) UpdateAbonement(c *gin.Context) {
+	form, err := c.MultipartForm()
+	if err != nil {
+		return
+	}
+
+	id := form.Value["id"]
+	title := form.Value["title"]
+	validityPeriod := form.Value["validity_period"]
+	visitingTime := form.Value["visiting_time"]
+	price := form.Value["price"]
+	parsePrice, err := strconv.ParseInt(price[0], 10, 32)
+	if err != nil {
+		logger.ErrorLogger.Printf("Failed ParseInt: %s", err)
+		return
+	}
+	services := form.Value["services"]
+	photo := form.File["photo"]
+
+	if services == nil {
+		return
+	}
+
+	if len(services) == 0 {
+		return
+	}
+
+	servicesIds := strings.Split(services[0], ",")
+
+	stream, err := (*h.abonementClient).UpdateAbonement(context.Background())
+	if err != nil {
+		fmt.Printf("failed to stat file: %v\n", err)
+	}
+
+	abonementDataForUpdate := &abonementGRPC.AbonementDataForUpdate{
+		Id:           id[0],
+		Title:        title[0],
+		Validity:     validityPeriod[0],
+		VisitingTime: visitingTime[0],
+		Price:        int32(parsePrice),
+		ServicesIds:  servicesIds,
+	}
+
+	updateAbonementRequestAbonementDataForUpdate := &abonementGRPC.UpdateAbonementRequest_AbonementDataForUpdate{
+		AbonementDataForUpdate: abonementDataForUpdate,
+	}
+
+	updateAbonementRequest := &abonementGRPC.UpdateAbonementRequest{
+		Payload: updateAbonementRequestAbonementDataForUpdate,
+	}
+
+	err = stream.Send(updateAbonementRequest)
+	if err != nil {
+		return
+	}
+
+	if photo != nil && len(photo) > 0 {
+		buffer := make([]byte, 1024*1024)
+		file, err := photo[0].Open()
+		if err != nil {
+			return
+		}
+
+		for {
+			n, err := file.Read(buffer)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return
+			}
+
+			err = stream.Send(&abonementGRPC.UpdateAbonementRequest{
+				Payload: &abonementGRPC.UpdateAbonementRequest_AbonementPhoto{
+					AbonementPhoto: buffer[:n],
+				},
+			},
+			)
+			if err != nil {
+				return
+			}
+		}
+	}
+
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"abonement": res.GetAbonementWithServices(),
+	})
+}
