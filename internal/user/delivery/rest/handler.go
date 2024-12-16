@@ -58,9 +58,20 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 
 	userDataForUpdate := &userGRPC.UserDataForUpdate{
 		Id:    userId,
-		Email: email[0],
-		Name:  name[0],
-		Role:  role[0],
+		Email: "",
+		Name:  "",
+		Role:  "",
+	}
+
+	userDataForUpdate.Id = userId
+	if email != nil {
+		userDataForUpdate.Email = email[0]
+	}
+	if name != nil {
+		userDataForUpdate.Name = name[0]
+	}
+	if role != nil {
+		userDataForUpdate.Role = role[0]
 	}
 
 	updateUserRequestUserDataForUpdate := &userGRPC.UpdateUserRequest_UserDataForUpdate{
@@ -76,7 +87,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	if len(photo) > 0 {
+	if photo != nil && len(photo) > 0 {
 		buffer := make([]byte, 1024*1024)
 		file, err := photo[0].Open()
 		if err != nil {
@@ -110,6 +121,6 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user": res,
+		"user": res.GetUserObject(),
 	})
 }

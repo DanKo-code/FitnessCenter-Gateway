@@ -9,4 +9,5 @@ func RegisterHTTPEndpoints(router *gin.Engine, abonementClient *abonementGRPC.Ab
 	h := NewHandler(abonementClient)
 
 	router.GET("/abonements", h.GetAbonements)
+	router.POST("/abonements", h.CreateAbonement)
 }

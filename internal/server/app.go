@@ -5,6 +5,7 @@ import (
 	abonementRest "Gateway/internal/abonement/rest"
 	coachRest "Gateway/internal/coach/rest"
 	reviewRest "Gateway/internal/review/delivery/rest"
+	serviceRest "Gateway/internal/service/delivery/rest"
 	ssoRest "Gateway/internal/sso/delivery/rest"
 	userRest "Gateway/internal/user/delivery/rest"
 	logger "Gateway/pkg/logger"
@@ -12,6 +13,7 @@ import (
 	abonementGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.abonement"
 	coachGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.coach"
 	reviewGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.review"
+	serviceGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.service"
 	userGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.user"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -34,6 +36,7 @@ type App struct {
 	coachClient     *coachGRPC.CoachClient
 	reviewClient    *reviewGRPC.ReviewClient
 	userClientI     *userGRPC.UserClient
+	serviceClient   *serviceGRPC.ServiceClient
 }
 
 func NewApp() (*App, error) {
@@ -71,6 +74,13 @@ func NewApp() (*App, error) {
 	}
 	reviewClient := reviewGRPC.NewReviewClient(connReview)
 
+	connService, err := grpc.NewClient(os.Getenv("SERVICE_SERVICE_PORT"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.ErrorLogger.Printf("failed to connect to Service server: %v", err)
+		return nil, err
+	}
+	serviceClient := serviceGRPC.NewServiceClient(connService)
+
 	return &App{
 		SSOClient:       conn,
 		userClient:      connUer,
@@ -78,6 +88,7 @@ func NewApp() (*App, error) {
 		coachClient:     &coachClient,
 		reviewClient:    &reviewClient,
 		userClientI:     &userClientI,
+		serviceClient:   &serviceClient,
 	}, nil
 }
 
@@ -86,8 +97,9 @@ func (app *App) Run(port string) error {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3333"},
+		AllowOrigins:     []string{"http://localhost:3333", "http://localhost:3001"},
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
@@ -105,6 +117,8 @@ func (app *App) Run(port string) error {
 	coachRest.RegisterHTTPEndpoints(router, app.coachClient)
 
 	reviewRest.RegisterHTTPEndpoints(router, app.reviewClient, app.userClientI)
+
+	serviceRest.RegisterHTTPEndpoints(router, app.serviceClient)
 
 	router.GET(os.Getenv("SWAGGER_PATH"), ginSwagger.WrapHandler(swaggerFiles.Handler))
 
