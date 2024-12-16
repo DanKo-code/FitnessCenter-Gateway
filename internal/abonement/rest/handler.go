@@ -6,6 +6,7 @@ import (
 	"fmt"
 	abonementGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.abonement"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"io"
 	"net/http"
@@ -223,5 +224,32 @@ func (h *Handler) UpdateAbonement(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"abonement": res.GetAbonementWithServices(),
+	})
+}
+
+func (h *Handler) DeleteAbonement(c *gin.Context) {
+
+	id := c.Param("id")
+
+	convertedId, err := uuid.Parse(id)
+	if err != nil {
+
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": fmt.Errorf("invalid id format")})
+		return
+	}
+
+	_ = convertedId
+
+	deleteAbonementByIdRequest := &abonementGRPC.DeleteAbonementByIdRequest{
+		Id: id,
+	}
+
+	deletedAbonementRes, err := (*h.abonementClient).DeleteAbonementById(context.TODO(), deleteAbonementByIdRequest)
+	if err != nil {
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"abonement": deletedAbonementRes.GetAbonementObject(),
 	})
 }
