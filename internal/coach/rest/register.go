@@ -9,4 +9,7 @@ func RegisterHTTPEndpoints(router *gin.Engine, coachClient *coachGRPC.CoachClien
 	h := NewHandler(coachClient)
 
 	router.GET("/coaches", h.GetCoaches)
+	router.POST("/coaches", h.CreateCoach)
+	router.PUT("/coaches", h.UpdateCoach)
+	router.DELETE("/coaches/:id", h.DeleteCoach)
 }
