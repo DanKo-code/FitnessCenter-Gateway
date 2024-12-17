@@ -8,7 +8,9 @@ import (
 	userGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.user"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"io"
 	"net/http"
 )
@@ -122,5 +124,48 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"user": res.GetUserObject(),
+	})
+}
+
+func (h *Handler) GetClients(c *gin.Context) {
+
+	userClient := userGRPC.NewUserClient(h.userClient)
+
+	clients, err := userClient.GetClients(context.Background(), &emptypb.Empty{})
+	if err != nil {
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"clients": clients.UserObjects,
+	})
+}
+
+func (h *Handler) DeleteClientById(c *gin.Context) {
+
+	userClient := userGRPC.NewUserClient(h.userClient)
+
+	id := c.Param("id")
+
+	convertedId, err := uuid.Parse(id)
+	if err != nil {
+
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": fmt.Errorf("invalid id format")})
+		return
+	}
+
+	_ = convertedId
+
+	deleteUserByIdRequest := &userGRPC.DeleteUserByIdRequest{
+		Id: id,
+	}
+
+	client, err := userClient.DeleteUserById(context.Background(), deleteUserByIdRequest)
+	if err != nil {
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"client": client.UserObject,
 	})
 }

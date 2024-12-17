@@ -10,4 +10,6 @@ func RegisterHTTPEndpoints(router *gin.Engine, validator *validator.Validate, ss
 	h := NewHandler(ssoClient, validator)
 
 	router.PUT("/users/:id", h.UpdateUser)
+	router.GET("/users", h.GetClients)
+	router.DELETE("/users/:id", h.DeleteClientById)
 }
