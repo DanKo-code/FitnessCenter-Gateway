@@ -4,6 +4,7 @@ import (
 	_ "Gateway/docs"
 	abonementRest "Gateway/internal/abonement/rest"
 	coachRest "Gateway/internal/coach/rest"
+	orderRest "Gateway/internal/order/delivery/rest"
 	reviewRest "Gateway/internal/review/delivery/rest"
 	serviceRest "Gateway/internal/service/delivery/rest"
 	ssoRest "Gateway/internal/sso/delivery/rest"
@@ -12,6 +13,7 @@ import (
 	"context"
 	abonementGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.abonement"
 	coachGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.coach"
+	orderGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.order"
 	reviewGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.review"
 	serviceGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.service"
 	userGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.user"
@@ -37,6 +39,7 @@ type App struct {
 	reviewClient    *reviewGRPC.ReviewClient
 	userClientI     *userGRPC.UserClient
 	serviceClient   *serviceGRPC.ServiceClient
+	orderClient     *orderGRPC.OrderClient
 }
 
 func NewApp() (*App, error) {
@@ -81,6 +84,13 @@ func NewApp() (*App, error) {
 	}
 	serviceClient := serviceGRPC.NewServiceClient(connService)
 
+	connOrder, err := grpc.NewClient(os.Getenv("ORDER_SERVICE_PORT"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.ErrorLogger.Printf("failed to connect to Order server: %v", err)
+		return nil, err
+	}
+	orderClient := orderGRPC.NewOrderClient(connOrder)
+
 	return &App{
 		SSOClient:       conn,
 		userClient:      connUer,
@@ -89,6 +99,7 @@ func NewApp() (*App, error) {
 		reviewClient:    &reviewClient,
 		userClientI:     &userClientI,
 		serviceClient:   &serviceClient,
+		orderClient:     &orderClient,
 	}, nil
 }
 
@@ -119,6 +130,8 @@ func (app *App) Run(port string) error {
 	reviewRest.RegisterHTTPEndpoints(router, app.reviewClient, app.userClientI)
 
 	serviceRest.RegisterHTTPEndpoints(router, app.serviceClient)
+
+	orderRest.RegisterHTTPEndpoints(router, app.orderClient)
 
 	router.GET(os.Getenv("SWAGGER_PATH"), ginSwagger.WrapHandler(swaggerFiles.Handler))
 
