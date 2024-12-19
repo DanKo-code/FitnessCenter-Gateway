@@ -10,4 +10,5 @@ func RegisterHTTPEndpoints(router *gin.Engine, orderClient *orderGRPC.OrderClien
 
 	router.POST("/checkout-session-completed", h.HandleCheckoutSessionCompleted)
 	router.POST("/create-checkout-session", h.CreateCheckoutSession)
+	router.GET("/orders/:userId", h.GetUserOrders)
 }

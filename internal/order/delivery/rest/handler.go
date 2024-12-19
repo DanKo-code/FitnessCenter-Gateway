@@ -5,8 +5,10 @@ import (
 	"Gateway/pkg/logger"
 	"context"
 	"encoding/json"
+	"fmt"
 	orderGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.order"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/stripe/stripe-go/v81"
 	"github.com/stripe/stripe-go/v81/webhook"
 	"io/ioutil"
@@ -100,4 +102,30 @@ func (h *Handler) CreateCheckoutSession(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"sessionUrl": session.GetSessionUrl()})
+}
+
+func (h *Handler) GetUserOrders(c *gin.Context) {
+	id := c.Param("userId")
+
+	convertedId, err := uuid.Parse(id)
+	if err != nil {
+
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": fmt.Errorf("invalid id format")})
+		return
+	}
+
+	_ = convertedId
+
+	getUserOrdersRequest := &orderGRPC.GetUserOrdersRequest{
+		UserId: id,
+	}
+
+	orders, err := (*h.orderClient).GetUserOrders(context.TODO(), getUserOrdersRequest)
+	if err != nil {
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"orders": orders.OrderObjectWithAbonementWithServices,
+	})
 }
