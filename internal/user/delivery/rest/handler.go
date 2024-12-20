@@ -31,6 +31,15 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 
 	userId := c.Param("id")
 
+	userIdFromToken := c.Param("UserIdFromToken")
+
+	if userId != userIdFromToken {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "Access denied: you cannot update another user's data",
+		})
+		return
+	}
+
 	cmd := &dtos.User{}
 
 	form, err := c.MultipartForm()

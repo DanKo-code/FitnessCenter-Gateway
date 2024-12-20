@@ -12,5 +12,4 @@ func RegisterHTTPEndpoints(
 	h := NewHandler(serviceClient)
 
 	router.GET("/services", h.GetServices)
-	//router.POST("/services", h.CreateServices)
 }

@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"Gateway/internal/common_middlewares/middlewares"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"google.golang.org/grpc"
@@ -9,7 +10,9 @@ import (
 func RegisterHTTPEndpoints(router *gin.Engine, validator *validator.Validate, ssoClient *grpc.ClientConn) {
 	h := NewHandler(ssoClient, validator)
 
-	router.PUT("/users/:id", h.UpdateUser)
-	router.GET("/users", h.GetClients)
-	router.DELETE("/users/:id", h.DeleteClientById)
+	authorized := router.Group("/", middlewares.VerifyAccessTokenMiddleware())
+
+	authorized.PUT("/users/:id", h.UpdateUser)
+	authorized.GET("/users", h.GetClients)
+	authorized.DELETE("/users/:id", middlewares.IsAdminMiddleware(), h.DeleteClientById)
 }

@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"Gateway/internal/common_middlewares/middlewares"
 	coachGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.coach"
 	"github.com/gin-gonic/gin"
 )
@@ -8,8 +9,10 @@ import (
 func RegisterHTTPEndpoints(router *gin.Engine, coachClient *coachGRPC.CoachClient) {
 	h := NewHandler(coachClient)
 
-	router.GET("/coaches", h.GetCoaches)
-	router.POST("/coaches", h.CreateCoach)
-	router.PUT("/coaches", h.UpdateCoach)
-	router.DELETE("/coaches/:id", h.DeleteCoach)
+	authorized := router.Group("/", middlewares.VerifyAccessTokenMiddleware())
+
+	authorized.GET("/coaches", h.GetCoaches)
+	authorized.POST("/coaches", middlewares.IsAdminMiddleware(), h.CreateCoach)
+	authorized.PUT("/coaches", middlewares.IsAdminMiddleware(), h.UpdateCoach)
+	authorized.DELETE("/coaches/:id", middlewares.IsAdminMiddleware(), h.DeleteCoach)
 }

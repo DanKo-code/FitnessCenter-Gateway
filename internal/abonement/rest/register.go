@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"Gateway/internal/common_middlewares/middlewares"
 	abonementGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.abonement"
 	"github.com/gin-gonic/gin"
 )
@@ -8,8 +9,10 @@ import (
 func RegisterHTTPEndpoints(router *gin.Engine, abonementClient *abonementGRPC.AbonementClient) {
 	h := NewHandler(abonementClient)
 
-	router.GET("/abonements", h.GetAbonements)
-	router.POST("/abonements", h.CreateAbonement)
-	router.PUT("/abonements", h.UpdateAbonement)
-	router.DELETE("/abonements/:id", h.DeleteAbonement)
+	authorized := router.Group("/", middlewares.VerifyAccessTokenMiddleware())
+
+	authorized.GET("/abonements", h.GetAbonements)
+	authorized.POST("/abonements", middlewares.IsAdminMiddleware(), h.CreateAbonement)
+	authorized.PUT("/abonements", middlewares.IsAdminMiddleware(), h.UpdateAbonement)
+	authorized.DELETE("/abonements/:id", middlewares.IsAdminMiddleware(), h.DeleteAbonement)
 }
