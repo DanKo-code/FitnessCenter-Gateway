@@ -31,7 +31,11 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 
 	userId := c.Param("id")
 
-	userIdFromToken := c.Param("UserIdFromToken")
+	userIdFromToken, exists := c.Get("UserIdFromToken")
+	if !exists {
+		logger.ErrorLogger.Printf("Cant find UserIdFromToken in context")
+		return
+	}
 
 	if userId != userIdFromToken {
 		c.JSON(http.StatusForbidden, gin.H{
@@ -47,16 +51,18 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	name := form.Value["name"]
-	email := form.Value["email"]
-	role := form.Value["role"]
+	name, namOk := form.Value["name"]
 	photo := form.File["photo"]
+
+	if namOk {
+		cmd.Name = name[0]
+	}
 
 	err = h.validator.Struct(cmd)
 	if err != nil {
 		logger.ErrorLogger.Printf("Error validating UpdateUserRequest: %v", err)
 
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "name must be from 2 to 100 symbols"})
 		return
 	}
 
@@ -75,16 +81,9 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 	}
 
 	userDataForUpdate.Id = userId
-	if email != nil {
-		userDataForUpdate.Email = email[0]
-	}
 	if name != nil {
 		userDataForUpdate.Name = name[0]
 	}
-	if role != nil {
-		userDataForUpdate.Role = role[0]
-	}
-
 	updateUserRequestUserDataForUpdate := &userGRPC.UpdateUserRequest_UserDataForUpdate{
 		UserDataForUpdate: userDataForUpdate,
 	}

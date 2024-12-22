@@ -5,6 +5,7 @@ import (
 	"Gateway/internal/sso/sso_errors"
 	logger "Gateway/pkg/logger"
 	"context"
+	"fmt"
 	ssoGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.sso"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -53,9 +54,17 @@ func (h *Handler) SignUp(c *gin.Context) {
 
 	err := h.validator.Struct(suReq)
 	if err != nil {
-		logger.ErrorLogger.Printf("Error validating SignUpRequest: %v", err)
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			customMessages := make(map[string]string)
+			for _, fieldErr := range validationErrors {
+				customMessages[fieldErr.Field()] = getCustomErrorMessage(fieldErr)
+			}
 
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"errors": customMessages})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal validation error"})
 		return
 	}
 
@@ -145,9 +154,17 @@ func (h *Handler) SignIn(c *gin.Context) {
 
 	err := h.validator.Struct(siReq)
 	if err != nil {
-		logger.ErrorLogger.Printf("Error validating SignInRequest: %v", err)
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			customMessages := make(map[string]string)
+			for _, fieldErr := range validationErrors {
+				customMessages[fieldErr.Field()] = getCustomErrorMessage(fieldErr)
+			}
 
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"errors": customMessages})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal validation error"})
 		return
 	}
 
@@ -324,4 +341,19 @@ func (h *Handler) Refresh(c *gin.Context) {
 		"accessToken":           rRes.GetAccessToken(),
 		"accessTokenExpiration": ateInt / accessTokenMaxAgeDivider,
 	})
+}
+
+func getCustomErrorMessage(fe validator.FieldError) string {
+	switch fe.Tag() {
+	case "required":
+		return fmt.Sprintf("Field '%s' is required to filling.", fe.Field())
+	case "email":
+		return fmt.Sprintf("Field '%s' must be correct email type.", fe.Field())
+	case "min":
+		return fmt.Sprintf("Field '%s' must be not less the %s symbols.", fe.Field(), fe.Param())
+	case "max":
+		return fmt.Sprintf("Field '%s' must be at most %s characters long.", fe.Field(), fe.Param())
+	default:
+		return fmt.Sprintf("Field '%s' not valid: %s.", fe.Field(), fe.Tag())
+	}
 }

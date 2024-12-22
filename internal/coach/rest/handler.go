@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"Gateway/internal/coach/dtos"
+	"Gateway/pkg/logger"
 	"context"
 	"fmt"
 	coachGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.coach"
@@ -9,7 +11,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"io"
 	"net/http"
-	"strings"
 )
 
 type Handler struct {
@@ -40,25 +41,18 @@ func (h *Handler) GetCoaches(c *gin.Context) {
 
 func (h *Handler) CreateCoach(c *gin.Context) {
 
-	form, err := c.MultipartForm()
-	if err != nil {
+	createCoachCommandAny, exists := c.Get("CreateCoachCommand")
+	if !exists {
+		logger.ErrorLogger.Printf("Cant find CreateCoachCommand in context")
 		return
 	}
 
-	name := form.Value["name"]
-	description := form.Value["description"]
-	services := form.Value["services"]
-	photo := form.File["photo"]
-
-	if services == nil {
+	createCoachCommand, ok := createCoachCommandAny.(*dtos.CreateCoachCommand)
+	if !ok {
+		logger.ErrorLogger.Printf("CreateCoachCommand has an invalid type")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "CreateCoachCommand has an invalid type"})
 		return
 	}
-
-	if len(services) == 0 {
-		return
-	}
-
-	servicesIds := strings.Split(services[0], ",")
 
 	stream, err := (*h.coachClient).CreateCoach(context.Background())
 	if err != nil {
@@ -66,9 +60,9 @@ func (h *Handler) CreateCoach(c *gin.Context) {
 	}
 
 	coachDataForCreate := &coachGRPC.CoachDataForCreate{
-		Name:            name[0],
-		Description:     description[0],
-		CoachServiceIds: servicesIds,
+		Name:            createCoachCommand.Name,
+		Description:     createCoachCommand.Description,
+		CoachServiceIds: createCoachCommand.Services,
 	}
 
 	createCoachRequestCoachDataForCreate := &coachGRPC.CreateCoachRequest_CoachDataForCreate{
@@ -83,6 +77,14 @@ func (h *Handler) CreateCoach(c *gin.Context) {
 	if err != nil {
 		return
 	}
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid form data"})
+		return
+	}
+
+	photo := form.File["photo"]
 
 	if photo != nil && len(photo) > 0 {
 		buffer := make([]byte, 1024*1024)
@@ -123,26 +125,18 @@ func (h *Handler) CreateCoach(c *gin.Context) {
 }
 
 func (h *Handler) UpdateCoach(c *gin.Context) {
-	form, err := c.MultipartForm()
-	if err != nil {
+	updateCoachCommandAny, exists := c.Get("UpdateCoachCommand")
+	if !exists {
+		logger.ErrorLogger.Printf("Cant find UpdateCoachCommand in context")
 		return
 	}
 
-	id := form.Value["id"]
-	name := form.Value["name"]
-	description := form.Value["description"]
-	services := form.Value["services"]
-	photo := form.File["photo"]
-
-	if services == nil {
+	updateCoachCommand, ok := updateCoachCommandAny.(*dtos.UpdateCoachCommand)
+	if !ok {
+		logger.ErrorLogger.Printf("UpdateCoachCommand has an invalid type")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "UpdateCoachCommand has an invalid type"})
 		return
 	}
-
-	if len(services) == 0 {
-		return
-	}
-
-	servicesIds := strings.Split(services[0], ",")
 
 	stream, err := (*h.coachClient).UpdateCoach(context.Background())
 	if err != nil {
@@ -150,10 +144,10 @@ func (h *Handler) UpdateCoach(c *gin.Context) {
 	}
 
 	coachDataForUpdate := &coachGRPC.CoachDataForUpdate{
-		Id:              id[0],
-		Name:            name[0],
-		Description:     description[0],
-		CoachServiceIds: servicesIds,
+		Id:              updateCoachCommand.Id,
+		Name:            updateCoachCommand.Name,
+		Description:     updateCoachCommand.Description,
+		CoachServiceIds: updateCoachCommand.Services,
 	}
 
 	updateCoachRequestCoachDataForUpdate := &coachGRPC.UpdateCoachRequest_CoachDataForUpdate{
@@ -166,13 +160,25 @@ func (h *Handler) UpdateCoach(c *gin.Context) {
 
 	err = stream.Send(updateCoachRequest)
 	if err != nil {
+		logger.ErrorLogger.Printf(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid form data"})
+		return
+	}
+
+	photo := form.File["photo"]
 
 	if photo != nil && len(photo) > 0 {
 		buffer := make([]byte, 1024*1024)
 		file, err := photo[0].Open()
 		if err != nil {
+			logger.ErrorLogger.Printf(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return
 		}
 
@@ -182,6 +188,8 @@ func (h *Handler) UpdateCoach(c *gin.Context) {
 				break
 			}
 			if err != nil {
+				logger.ErrorLogger.Printf(err.Error())
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 				return
 			}
 
@@ -192,6 +200,8 @@ func (h *Handler) UpdateCoach(c *gin.Context) {
 			},
 			)
 			if err != nil {
+				logger.ErrorLogger.Printf(err.Error())
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 				return
 			}
 		}
@@ -199,6 +209,8 @@ func (h *Handler) UpdateCoach(c *gin.Context) {
 
 	res, err := stream.CloseAndRecv()
 	if err != nil {
+		logger.ErrorLogger.Printf(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 
