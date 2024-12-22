@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"Gateway/internal/abonement/dtos"
 	"Gateway/pkg/logger"
 	"context"
 	"fmt"
@@ -10,8 +11,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"io"
 	"net/http"
-	"strconv"
-	"strings"
 )
 
 type Handler struct {
@@ -42,44 +41,32 @@ func (h *Handler) GetAbonements(c *gin.Context) {
 
 func (h *Handler) CreateAbonement(c *gin.Context) {
 
-	form, err := c.MultipartForm()
-	if err != nil {
+	createAbonementCommandAny, exists := c.Get("CreateAbonementCommand")
+	if !exists {
+		logger.ErrorLogger.Printf("Cant find CreateAbonementCommand in context")
 		return
 	}
 
-	title := form.Value["title"]
-	validityPeriod := form.Value["validity_period"]
-	visitingTime := form.Value["visiting_time"]
-	price := form.Value["price"]
-	parsePrice, err := strconv.ParseInt(price[0], 10, 32)
-	if err != nil {
-		logger.ErrorLogger.Printf("Failed ParseInt: %s", err)
+	createAbonementCommand, ok := createAbonementCommandAny.(*dtos.CreateAbonementCommand)
+	if !ok {
+		logger.ErrorLogger.Printf("CreateAbonementCommand has an invalid type")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "CreateAbonementCommand has an invalid type"})
 		return
 	}
-	services := form.Value["services"]
-	photo := form.File["photo"]
-
-	if services == nil {
-		return
-	}
-
-	if len(services) == 0 {
-		return
-	}
-
-	servicesIds := strings.Split(services[0], ",")
 
 	stream, err := (*h.abonementClient).CreateAbonement(context.Background())
 	if err != nil {
-		fmt.Printf("failed to stat file: %v\n", err)
+		logger.ErrorLogger.Printf(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open CreateAbonement stream"})
+		return
 	}
 
 	abonementDataForCreate := &abonementGRPC.AbonementDataForCreate{
-		Title:        title[0],
-		Validity:     validityPeriod[0],
-		VisitingTime: visitingTime[0],
-		Price:        int32(parsePrice),
-		ServicesIds:  servicesIds,
+		Title:        createAbonementCommand.Title,
+		Validity:     createAbonementCommand.ValidityPeriod,
+		VisitingTime: createAbonementCommand.VisitingTime,
+		Price:        int32(createAbonementCommand.Price),
+		ServicesIds:  createAbonementCommand.Services,
 	}
 
 	createAbonementRequestAbonementDataForCreate := &abonementGRPC.CreateAbonementRequest_AbonementDataForCreate{
@@ -92,13 +79,25 @@ func (h *Handler) CreateAbonement(c *gin.Context) {
 
 	err = stream.Send(createAbonementRequest)
 	if err != nil {
+		logger.ErrorLogger.Printf(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid form data"})
+		return
+	}
+
+	photo := form.File["photo"]
 
 	if photo != nil && len(photo) > 0 {
 		buffer := make([]byte, 1024*1024)
 		file, err := photo[0].Open()
 		if err != nil {
+			logger.ErrorLogger.Printf(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return
 		}
 
@@ -108,6 +107,8 @@ func (h *Handler) CreateAbonement(c *gin.Context) {
 				break
 			}
 			if err != nil {
+				logger.ErrorLogger.Printf(err.Error())
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 				return
 			}
 
@@ -118,6 +119,8 @@ func (h *Handler) CreateAbonement(c *gin.Context) {
 			},
 			)
 			if err != nil {
+				logger.ErrorLogger.Printf(err.Error())
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 				return
 			}
 		}
@@ -125,6 +128,8 @@ func (h *Handler) CreateAbonement(c *gin.Context) {
 
 	res, err := stream.CloseAndRecv()
 	if err != nil {
+		logger.ErrorLogger.Printf(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 
@@ -134,33 +139,19 @@ func (h *Handler) CreateAbonement(c *gin.Context) {
 }
 
 func (h *Handler) UpdateAbonement(c *gin.Context) {
-	form, err := c.MultipartForm()
-	if err != nil {
+
+	updateAbonementCommandAny, exists := c.Get("UpdateAbonementCommand")
+	if !exists {
+		logger.ErrorLogger.Printf("Cant find UpdateAbonementCommand in context")
 		return
 	}
 
-	id := form.Value["id"]
-	title := form.Value["title"]
-	validityPeriod := form.Value["validity_period"]
-	visitingTime := form.Value["visiting_time"]
-	price := form.Value["price"]
-	parsePrice, err := strconv.ParseInt(price[0], 10, 32)
-	if err != nil {
-		logger.ErrorLogger.Printf("Failed ParseInt: %s", err)
+	updateAbonementCommand, ok := updateAbonementCommandAny.(*dtos.UpdateAbonementCommand)
+	if !ok {
+		logger.ErrorLogger.Printf("UpdateAbonementCommand has an invalid type")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "UpdateAbonementCommand has an invalid type"})
 		return
 	}
-	services := form.Value["services"]
-	photo := form.File["photo"]
-
-	if services == nil {
-		return
-	}
-
-	if len(services) == 0 {
-		return
-	}
-
-	servicesIds := strings.Split(services[0], ",")
 
 	stream, err := (*h.abonementClient).UpdateAbonement(context.Background())
 	if err != nil {
@@ -168,12 +159,12 @@ func (h *Handler) UpdateAbonement(c *gin.Context) {
 	}
 
 	abonementDataForUpdate := &abonementGRPC.AbonementDataForUpdate{
-		Id:           id[0],
-		Title:        title[0],
-		Validity:     validityPeriod[0],
-		VisitingTime: visitingTime[0],
-		Price:        int32(parsePrice),
-		ServicesIds:  servicesIds,
+		Id:           updateAbonementCommand.Id,
+		Title:        updateAbonementCommand.Title,
+		Validity:     updateAbonementCommand.ValidityPeriod,
+		VisitingTime: updateAbonementCommand.VisitingTime,
+		Price:        int32(updateAbonementCommand.Price),
+		ServicesIds:  updateAbonementCommand.Services,
 	}
 
 	updateAbonementRequestAbonementDataForUpdate := &abonementGRPC.UpdateAbonementRequest_AbonementDataForUpdate{
@@ -186,13 +177,25 @@ func (h *Handler) UpdateAbonement(c *gin.Context) {
 
 	err = stream.Send(updateAbonementRequest)
 	if err != nil {
+		logger.ErrorLogger.Printf(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid form data"})
+		return
+	}
+
+	photo := form.File["photo"]
 
 	if photo != nil && len(photo) > 0 {
 		buffer := make([]byte, 1024*1024)
 		file, err := photo[0].Open()
 		if err != nil {
+			logger.ErrorLogger.Printf(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return
 		}
 
@@ -202,6 +205,8 @@ func (h *Handler) UpdateAbonement(c *gin.Context) {
 				break
 			}
 			if err != nil {
+				logger.ErrorLogger.Printf(err.Error())
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 				return
 			}
 
@@ -212,6 +217,8 @@ func (h *Handler) UpdateAbonement(c *gin.Context) {
 			},
 			)
 			if err != nil {
+				logger.ErrorLogger.Printf(err.Error())
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 				return
 			}
 		}
@@ -219,6 +226,8 @@ func (h *Handler) UpdateAbonement(c *gin.Context) {
 
 	res, err := stream.CloseAndRecv()
 	if err != nil {
+		logger.ErrorLogger.Printf(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 
