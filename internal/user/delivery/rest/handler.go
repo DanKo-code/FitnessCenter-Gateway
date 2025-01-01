@@ -66,6 +66,8 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		return
 	}
 
+	logger.InfoLogger.Printf("cmd: %v", cmd)
+
 	userClient := userGRPC.NewUserClient(h.userClient)
 
 	stream, err := userClient.UpdateUser(context.Background())

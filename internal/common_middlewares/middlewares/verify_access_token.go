@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"Gateway/pkg/logger"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -42,12 +43,14 @@ func VerifyAccessTokenMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
+			logger.ErrorLogger.Printf("Missing Authorization header")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Missing Authorization header"})
 			return
 		}
 
 		tokenParts := strings.Split(authHeader, " ")
 		if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
+			logger.ErrorLogger.Printf("Invalid Authorization header format")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid Authorization header format"})
 			return
 		}
@@ -55,7 +58,7 @@ func VerifyAccessTokenMiddleware() gin.HandlerFunc {
 		token := tokenParts[1]
 		claims, err := VerifyAccessToken(token)
 		if err != nil {
-			fmt.Println("Error verifying token:", err)
+			logger.ErrorLogger.Printf("Invalid token")
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Invalid token"})
 			return
 		}

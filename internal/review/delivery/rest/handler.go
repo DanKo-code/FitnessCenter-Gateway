@@ -45,7 +45,7 @@ func (h *Handler) CreateCoachReview(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&coachReviewDataForCreate); err != nil {
 		logger.ErrorLogger.Printf("Error binding CreateCoachReviewRequest: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad CreateCoachReviewRequest"})
 		return
 	}
 
@@ -53,7 +53,8 @@ func (h *Handler) CreateCoachReview(c *gin.Context) {
 	coachReviewDataForCreateProto.Body = coachReviewDataForCreate.Body
 	coachReviewDataForCreateProto.UserId = coachReviewDataForCreate.UserId.String()
 
-	//CoachId validate
+	logger.InfoLogger.Printf("coachReviewDataForCreateProto: %v", coachReviewDataForCreateProto)
+
 	_, err := uuid.Parse(coachReviewDataForCreateProto.CoachId)
 	if err != nil {
 		logger.ErrorLogger.Printf("id must be uuid")
@@ -62,22 +63,19 @@ func (h *Handler) CreateCoachReview(c *gin.Context) {
 		return
 	}
 
-	//CoachId validate
-	_, err = uuid.Parse(coachReviewDataForCreateProto.CoachId)
+	_, err = uuid.Parse(coachReviewDataForCreateProto.UserId)
 	if err != nil {
 		logger.ErrorLogger.Printf("id must be uuid")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "id must be uuid"})
 		return
 	}
 
-	//Body validate
 	if len(coachReviewDataForCreateProto.Body) < 10 || len(coachReviewDataForCreateProto.Body) > 255 {
 		logger.ErrorLogger.Printf("Review body must be between 10 and 255 characters long")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Review body must be between 10 and 255 characters long"})
 		return
 	}
 
-	//UserId validate
 	_, err = uuid.Parse(coachReviewDataForCreateProto.UserId)
 	if err != nil {
 		logger.ErrorLogger.Printf("id must be uuid")
@@ -94,7 +92,6 @@ func (h *Handler) CreateCoachReview(c *gin.Context) {
 		return
 	}
 
-	//add user!!!
 	getUserByIdRequest := &userGRPC.GetUserByIdRequest{
 		Id: review.ReviewObject.UserId,
 	}

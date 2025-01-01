@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func IsAdminMiddleware() gin.HandlerFunc {
+func IsClientMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		role, exists := c.Get("Role")
 		if !exists {
@@ -16,9 +16,9 @@ func IsAdminMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		if role != "admin" {
-			logger.ErrorLogger.Printf("Error current user not admin: %v", common_middlewares_errors.CurrentUserNotAdmin)
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": common_middlewares_errors.CurrentUserNotAdmin.Error()})
+		if role != "client" {
+			logger.ErrorLogger.Printf("Error current user not client: %v", common_middlewares_errors.CurrentUserNotClient)
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": common_middlewares_errors.CurrentUserNotClient.Error()})
 			return
 		}
 
