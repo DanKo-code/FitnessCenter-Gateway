@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -88,7 +89,7 @@ func (h *Handler) SignUp(c *gin.Context) {
 
 	signUpRequest := &ssoGRPC.SignUpRequest{}
 	signUpRequest.Name = suReq.Name
-	signUpRequest.Email = suReq.Email
+	signUpRequest.Email = strings.ToLower(suReq.Email)
 	signUpRequest.Password = suReq.Password
 	signUpRequest.FingerPrint = suReq.FingerPrint
 
@@ -187,7 +188,7 @@ func (h *Handler) SignIn(c *gin.Context) {
 	ssoClient := ssoGRPC.NewSSOClient(h.ssoClient)
 
 	signIpRequest := &ssoGRPC.SignInRequest{
-		Email:       siReq.Email,
+		Email:       strings.ToLower(siReq.Email),
 		Password:    siReq.Password,
 		FingerPrint: siReq.FingerPrint,
 	}
