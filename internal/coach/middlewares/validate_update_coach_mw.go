@@ -24,6 +24,14 @@ func ValidateUpdateCoachMW() gin.HandlerFunc {
 		description, descriptionOk := form.Value["description"]
 		services, servicesOk := form.Value["services"]
 
+		logger.DebugLogger.Printf(
+			"id: %v\n"+
+				"name: %v\n"+
+				"description: %v\n"+
+				"services: %v\n",
+			id, name, description, services,
+		)
+
 		//id validate
 		if len(id) != 1 || !idOk {
 			logger.ErrorLogger.Printf("id is required for updating")
@@ -55,7 +63,7 @@ func ValidateUpdateCoachMW() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Name must be between 3 and 100 characters long"})
 			return
 		}
-		allowedNameRegex := `^[a-zA-Zа-яА-Я0-9]+$`
+		allowedNameRegex := `^[a-zA-Zа-яА-Я0-9 ]+$`
 		matched, _ := regexp.MatchString(allowedNameRegex, nameValue)
 		if !matched {
 			logger.ErrorLogger.Printf("Name can only contain Russian and English letters, digits, and spaces")

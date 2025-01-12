@@ -38,7 +38,7 @@ func ValidateCreateCoachMW() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Name must be between 3 and 100 characters long"})
 			return
 		}
-		allowedNameRegex := `^[a-zA-Zа-яА-Я0-9]+$`
+		allowedNameRegex := `^[a-zA-Zа-яА-Я0-9 ]+$`
 		matched, _ := regexp.MatchString(allowedNameRegex, nameValue)
 		if !matched {
 			logger.ErrorLogger.Printf("Name can only contain Russian and English letters, digits, and spaces")
