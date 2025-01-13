@@ -9,14 +9,14 @@ import (
 	orderGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.order"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/stripe/stripe-go/v81"
-	"github.com/stripe/stripe-go/v81/webhook"
+	"github.com/stripe/stripe-go/v79"
+	"github.com/stripe/stripe-go/v79/webhook"
 	"io/ioutil"
 	"log"
 	"net/http"
 )
 
-const endpointSecret = "whsec_vXhTRVAqYzpjERDiYjv95EZzhyTBNvTM"
+const endpointSecret = "whsec_07715d3864ab33c2cb0d10293ce78d99e311a165f98a15a40f4c1cd2711b286d"
 
 type Handler struct {
 	orderClient *orderGRPC.OrderClient
@@ -29,11 +29,16 @@ func NewHandler(orderClient *orderGRPC.OrderClient) *Handler {
 }
 
 func (h *Handler) HandleCheckoutSessionCompleted(c *gin.Context) {
+
+	logger.InfoLogger.Printf("Enter HandleCheckoutSessionCompleted Handler")
+
 	payload, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read body"})
 		return
 	}
+
+	logger.DebugLogger.Printf("Stripe-Signature Header: " + c.Request.Header.Get("Stripe-Signature"))
 
 	event, err := webhook.ConstructEvent(payload, c.Request.Header.Get("Stripe-Signature"), endpointSecret)
 	if err != nil {
@@ -53,6 +58,8 @@ func (h *Handler) HandleCheckoutSessionCompleted(c *gin.Context) {
 			return
 		}
 
+		logger.DebugLogger.Printf("session.Metadata: %v", session.Metadata)
+
 		clientId = session.Metadata["client_id"]
 		abonementId = session.Metadata["abonement_id"]
 
@@ -66,6 +73,8 @@ func (h *Handler) HandleCheckoutSessionCompleted(c *gin.Context) {
 			AbonementId: abonementId,
 		},
 	}
+
+	logger.DebugLogger.Printf("createOrderRequest: %v", createOrderRequest)
 
 	order, err := (*h.orderClient).CreateOrder(context.TODO(), createOrderRequest)
 	if err != nil {
@@ -95,6 +104,8 @@ func (h *Handler) CreateCheckoutSession(c *gin.Context) {
 		AbonementId:   ccsDto.AbonementId,
 		StripePriceId: ccsDto.StripePriceId,
 	}
+
+	logger.DebugLogger.Printf("createCheckoutSessionRequest: %v", createCheckoutSessionRequest)
 
 	session, err := (*h.orderClient).CreateCheckoutSession(context.TODO(), createCheckoutSessionRequest)
 	if err != nil {
