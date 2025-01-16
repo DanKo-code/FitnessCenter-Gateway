@@ -35,7 +35,7 @@ func ValidateCreateCoachMW() gin.HandlerFunc {
 		nameValue := name[0]
 		if len(nameValue) < 2 || len(nameValue) > 100 {
 			logger.ErrorLogger.Printf("Name must be between 2 and 100 characters long")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Name must be between 3 and 100 characters long"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Длина имени должна составлять от 2 до 100 символов"})
 			return
 		}
 		allowedNameRegex := `^[a-zA-Zа-яА-Я0-9 ]+$`
@@ -50,7 +50,7 @@ func ValidateCreateCoachMW() gin.HandlerFunc {
 		descriptionValue := description[0]
 		if len(descriptionValue) < 10 || len(nameValue) > 500 {
 			logger.ErrorLogger.Printf("Description must be between 10 and 500 characters long")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Description must be between 10 and 500 characters long"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Длина описания должна составлять от 10 до 500 символов"})
 			return
 		}
 
@@ -58,7 +58,7 @@ func ValidateCreateCoachMW() gin.HandlerFunc {
 		servicesIds := strings.Split(services[0], ",")
 		if len(servicesIds) == 0 {
 			logger.ErrorLogger.Printf("at least one service is required")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "at least one service is required"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "требуется по крайней мере одна услуга"})
 			return
 		}
 

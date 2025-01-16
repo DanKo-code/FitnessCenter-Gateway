@@ -62,7 +62,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 	if err != nil {
 		logger.ErrorLogger.Printf("Error validating UpdateUserRequest: %v", err)
 
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "name must be from 2 to 100 symbols"})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "имя должно содержать от 2 до 100 символов"})
 		return
 	}
 

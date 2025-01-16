@@ -48,7 +48,7 @@ func ValidateCreateAbonementMW() gin.HandlerFunc {
 		titleValue := title[0]
 		if len(titleValue) < 3 || len(titleValue) > 100 {
 			logger.ErrorLogger.Printf("Title must be between 3 and 100 characters long")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Title must be between 3 and 100 characters long"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Длина названия должна составлять от 3 до 100 символов"})
 			return
 		}
 		allowedTitleRegex := `^[a-zA-Zа-яА-Я0-9 ]+$`
@@ -68,7 +68,7 @@ func ValidateCreateAbonementMW() gin.HandlerFunc {
 		}
 		if parsePrice < 10 || parsePrice > 1000 {
 			logger.ErrorLogger.Printf("price must bigger then 9$ and lower then 1000$")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "price must bigger then 10$ and lower then 1000$"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "цена должна быть ниже 10BYN и выше 1000BYN"})
 			return
 		}
 
@@ -76,7 +76,7 @@ func ValidateCreateAbonementMW() gin.HandlerFunc {
 		servicesIds := strings.Split(services[0], ",")
 		if len(servicesIds) == 0 {
 			logger.ErrorLogger.Printf("at least one service is required")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "at least one service is required"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "требуется по крайней мере одна услуга"})
 			return
 		}
 

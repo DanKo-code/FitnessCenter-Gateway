@@ -35,7 +35,7 @@ func ValidateUpdateCoachMW() gin.HandlerFunc {
 		//id validate
 		if len(id) != 1 || !idOk {
 			logger.ErrorLogger.Printf("id is required for updating")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "id is required for updating"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "для обновления требуется идентификатор"})
 			c.Set("InvalidUpdate", struct{}{})
 			return
 		}
@@ -51,7 +51,7 @@ func ValidateUpdateCoachMW() gin.HandlerFunc {
 			(len(description) != 1 || !descriptionOk) &&
 			(len(services) != 1 || !servicesOk) {
 			logger.ErrorLogger.Printf("at least 1 field is required for updating")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "at least 1 field is required for updating"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "для обновления требуется как минимум 1 поле"})
 			c.Set("InvalidUpdate", struct{}{})
 			return
 		}
@@ -60,7 +60,7 @@ func ValidateUpdateCoachMW() gin.HandlerFunc {
 		nameValue := name[0]
 		if len(nameValue) < 2 || len(nameValue) > 100 {
 			logger.ErrorLogger.Printf("Name must be between 2 and 100 characters long")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Name must be between 3 and 100 characters long"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Длина имени должна составлять от 2 до 100 символов"})
 			return
 		}
 		allowedNameRegex := `^[a-zA-Zа-яА-Я0-9 ]+$`
@@ -75,7 +75,7 @@ func ValidateUpdateCoachMW() gin.HandlerFunc {
 		descriptionValue := description[0]
 		if len(descriptionValue) < 10 || len(nameValue) > 500 {
 			logger.ErrorLogger.Printf("Description must be between 10 and 500 characters long")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Description must be between 10 and 500 characters long"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Длина описания должна составлять от 10 до 500 символов"})
 			return
 		}
 

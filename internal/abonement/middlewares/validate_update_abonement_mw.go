@@ -30,7 +30,7 @@ func ValidateUpdateAbonementMW() gin.HandlerFunc {
 		//id validate
 		if len(id) != 1 || !idOk {
 			logger.ErrorLogger.Printf("id is required for updating")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "id is required for updating"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "для обновления требуется идентификатор"})
 			c.Set("InvalidUpdate", struct{}{})
 			return
 		}
@@ -48,7 +48,7 @@ func ValidateUpdateAbonementMW() gin.HandlerFunc {
 			(len(price) != 1 || !priceOk) &&
 			(len(services) != 1 || !servicesOk) {
 			logger.ErrorLogger.Printf("at least 1 field is required for updating")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "at least 1 field is required for updating"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "для обновления требуется как минимум 1 поле"})
 			c.Set("InvalidUpdate", struct{}{})
 			return
 		}
@@ -69,7 +69,7 @@ func ValidateUpdateAbonementMW() gin.HandlerFunc {
 		if titleOk {
 			if len(titleValue) < 3 || len(titleValue) > 100 {
 				logger.ErrorLogger.Printf("Title must be between 3 and 100 characters long")
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Title must be between 3 and 100 characters long"})
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Длина названия должна составлять от 3 до 100 символов"})
 				c.Set("InvalidUpdate", struct{}{})
 				return
 			}
@@ -95,7 +95,7 @@ func ValidateUpdateAbonementMW() gin.HandlerFunc {
 			}
 			if parsePrice < 10 || parsePrice > 1000 {
 				logger.ErrorLogger.Printf("price must bigger then 9$ and lower then 1000$")
-				c.JSON(http.StatusBadRequest, gin.H{"error": "price must bigger then 10$ and lower then 1000$"})
+				c.JSON(http.StatusBadRequest, gin.H{"error": "цена должна быть ниже 10BYN и выше 1000BYN"})
 				c.Set("InvalidUpdate", struct{}{})
 				return
 			}

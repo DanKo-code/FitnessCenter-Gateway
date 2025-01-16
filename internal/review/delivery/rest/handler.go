@@ -72,7 +72,7 @@ func (h *Handler) CreateCoachReview(c *gin.Context) {
 
 	if len(coachReviewDataForCreateProto.Body) < 10 || len(coachReviewDataForCreateProto.Body) > 255 {
 		logger.ErrorLogger.Printf("Review body must be between 10 and 255 characters long")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Review body must be between 10 and 255 characters long"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Текст отзыва должен содержать от 10 до 255 символов"})
 		return
 	}
 

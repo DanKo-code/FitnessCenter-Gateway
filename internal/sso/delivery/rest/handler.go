@@ -347,14 +347,14 @@ func (h *Handler) Refresh(c *gin.Context) {
 func getCustomErrorMessage(fe validator.FieldError) string {
 	switch fe.Tag() {
 	case "required":
-		return fmt.Sprintf("Field '%s' is required to filling.", fe.Field())
+		return fmt.Sprintf("Поле '%s' обязательно к заполнению.", fe.Field())
 	case "email":
-		return fmt.Sprintf("Field '%s' must be correct email type.", fe.Field())
+		return fmt.Sprintf("Поле '%s' должен быть указан правильный тип электронной почты.", fe.Field())
 	case "min":
-		return fmt.Sprintf("Field '%s' must be not less the %s symbols.", fe.Field(), fe.Param())
+		return fmt.Sprintf("Поле '%s' должно содержать не менее %s символов.", fe.Field(), fe.Param())
 	case "max":
-		return fmt.Sprintf("Field '%s' must be at most %s characters long.", fe.Field(), fe.Param())
+		return fmt.Sprintf("Поле '%s' должно содержать не более %s символов.", fe.Field(), fe.Param())
 	default:
-		return fmt.Sprintf("Field '%s' not valid: %s.", fe.Field(), fe.Tag())
+		return fmt.Sprintf("Поле '%s' не валидно: %s.", fe.Field(), fe.Tag())
 	}
 }
